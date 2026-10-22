@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Modules\Member\Http\Controllers;
 
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
@@ -18,16 +19,18 @@ use Shared\Utils\HttpStatus;
  */
 final class GoogleOAuthRedirectController
 {
-    public function __invoke(): JsonResponse
+    public function __invoke(Request $request): JsonResponse
     {
-        // A random "state" value proves that the callback belongs to THIS sign-in attempt
         $state = Str::random(40);
 
-        // Remember it for 10 minutes. The callback must find it, and it can be used only once
-        Cache::put(MemberOAuthService::stateKey($state), true, now()->addMinutes(10));
+        // Store the remember choice with the state, so the callback can use it.
+        // The state is one-time, so this value is also one-time.
+        Cache::put(
+            MemberOAuthService::stateKey($state),
+            ['remember' => $request->boolean('remember')],
+            now()->addMinutes(10),
+        );
 
-        // stateless() stops Socialite from using the session (we are an API, with no session).
-        // with(['state' => ...]) sends our own state value to Google.
         $url = Socialite::driver('google')
             ->stateless()
             ->with(['state' => $state])

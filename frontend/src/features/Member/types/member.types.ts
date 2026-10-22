@@ -32,12 +32,14 @@ export interface RegisterMemberPayload {
 export interface LoginFormValues {
   email: string;
   password: string;
+  remember: boolean;
 }
 
 // The exact shape the backend expects
 export interface LoginMemberPayload {
   email: string;
   password: string;
+  remember: boolean;
 }
 
 // What the server returns inside "data" after a successful login

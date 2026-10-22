@@ -52,7 +52,7 @@ final class GoogleOAuthTest extends TestCase
     /** Stores a valid one-time state, as the redirect endpoint would */
     private function validState(string $state = 'valid-state'): string
     {
-        Cache::put(MemberOAuthService::stateKey($state), true, now()->addMinutes(10));
+        Cache::put(MemberOAuthService::stateKey($state), ['remember' => false], now()->addMinutes(10));
 
         return $state;
     }

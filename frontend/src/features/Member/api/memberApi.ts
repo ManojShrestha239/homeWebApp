@@ -55,6 +55,7 @@ export function loginMember(
   const payload: LoginMemberPayload = {
     email: values.email.trim(),
     password: values.password,
+    remember: values.remember,
   };
 
   return apiRequest<LoginData>("/members/login", {
@@ -73,11 +74,13 @@ export function getCurrentMember(
 
 /** Asks the backend for the Google sign-in address */
 export function getGoogleAuthUrl(
+  remember: boolean,
   signal?: AbortSignal,
 ): Promise<ApiResponse<GoogleAuthUrlData>> {
-  return apiRequest<GoogleAuthUrlData>("/members/oauth/google/redirect", {
-    signal,
-  });
+  return apiRequest<GoogleAuthUrlData>(
+    `/members/oauth/google/redirect?remember=${remember ? 1 : 0}`,
+    { signal },
+  );
 }
 
 /** Asks the server to email a reset link. The reply is the same whether or not the email exists */

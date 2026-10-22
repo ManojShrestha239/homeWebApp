@@ -8,16 +8,16 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Modules\Member\DTOs\LoginMemberDTO;
 use Modules\Member\Models\Member;
-use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
 use Shared\Exceptions\ApiException;
 use Shared\Utils\HttpStatus;
 use Throwable;
 
-/**
- * Checks the password, checks the email is verified, then issues a JWT.
- */
 final class MemberLoginService
 {
+    public function __construct(
+        private readonly MemberTokenService $tokens,
+    ) {}
+
     /**
      * @return array{access_token: string, token_type: string, expires_in: int, member: Member}
      */
@@ -25,10 +25,6 @@ final class MemberLoginService
     {
         $member = Member::where('email', $dto->email)->first();
 
-        // Same message for "no such email" and "wrong password".
-        // This stops attackers from discovering which emails are registered.
-        // Google-only members have no password, so they can't use the password form.
-        // They get the same generic message, which keeps account details private.
         if ($member === null || $member->password === null || ! Hash::check($dto->password, $member->password)) {
             throw new ApiException(
                 HttpStatus::UNAUTHORIZED,
@@ -37,7 +33,6 @@ final class MemberLoginService
             );
         }
 
-        // The password was right, so it's safe to explain the next step
         if ($member->email_verified_at === null) {
             throw new ApiException(
                 HttpStatus::FORBIDDEN,
@@ -48,14 +43,7 @@ final class MemberLoginService
         }
 
         try {
-            $token = JWTAuth::fromUser($member);   // create the signed wristband
-
-            return [
-                'access_token' => $token,
-                'token_type' => 'bearer',
-                'expires_in' => (int) JWTAuth::factory()->getTTL() * 60,   // TTL is in minutes; we return seconds
-                'member' => $member,
-            ];
+            $issued = $this->tokens->issue($member, $dto->remember);
         } catch (Throwable $e) {
             Log::error('Token creation failed', ['exception' => $e]);
 
@@ -67,5 +55,12 @@ final class MemberLoginService
                 $e,
             );
         }
+
+        return [
+            'access_token' => $issued['access_token'],
+            'token_type' => 'bearer',
+            'expires_in' => $issued['expires_in'],
+            'member' => $member,
+        ];
     }
 }

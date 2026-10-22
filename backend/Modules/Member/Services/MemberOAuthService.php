@@ -8,7 +8,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Laravel\Socialite\Contracts\User as SocialiteUser;
 use Modules\Member\Models\Member;
-use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
 use Shared\Exceptions\ApiException;
 use Shared\Utils\HttpStatus;
 
@@ -78,9 +77,9 @@ final class MemberOAuthService
         });
     }
 
-    /** Creates the same JWT the password login creates */
-    public function issueToken(Member $member): string
+    /** @return array{access_token: string, expires_in: int} */
+    public function issueToken(Member $member, bool $remember): array
     {
-        return JWTAuth::fromUser($member);
+        return app(MemberTokenService::class)->issue($member, $remember);
     }
 }

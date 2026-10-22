@@ -41,7 +41,8 @@ final class GoogleOAuthCallbackController
 
             // Check the state. Cache::pull reads AND deletes it, so it works only once
             $state = (string) $request->query('state', '');
-            if ($state === '' || Cache::pull(MemberOAuthService::stateKey($state)) === null) {
+            $stored = Cache::pull(MemberOAuthService::stateKey($state));
+            if ($state === '' || ! is_array($stored)) {
                 throw new ApiException(
                     HttpStatus::BAD_REQUEST,
                     'OAUTH_STATE_INVALID',
@@ -49,15 +50,19 @@ final class GoogleOAuthCallbackController
                 );
             }
 
+            $remember = (bool) ($stored['remember'] ?? false);
+
             // Exchange the code from the URL for the Google profile
             $googleUser = Socialite::driver('google')->stateless()->user();
 
             $member = $this->oauth->resolveGoogleMember($googleUser);
-            $token = $this->oauth->issueToken($member);
+            $issued = $this->oauth->issueToken($member, $remember);
 
             // The token goes in the #fragment, which browsers never send to servers or log
             return redirect()->away($frontendCallback . '#' . http_build_query([
-                'token' => $token,
+                'token' => $issued['access_token'],
+                'expires_in' => $issued['expires_in'],
+                'remember' => $remember ? '1' : '0',
                 'type' => 'GOOGLE_LOGIN_SUCCESS',
             ]));
         } catch (ApiException $e) {

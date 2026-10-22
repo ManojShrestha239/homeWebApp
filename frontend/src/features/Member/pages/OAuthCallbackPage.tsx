@@ -44,7 +44,8 @@ export function OAuthCallbackPage() {
     }
 
     // Save the wristband, then ask the API who it belongs to
-    tokenStorage.set(token);
+    const remember = params.get("remember") === "1";
+    tokenStorage.set(token, remember);
     getCurrentMember()
       .then(() => {
         window.location.replace("/dashboard"); // replace, so the Back button skips the callback URL

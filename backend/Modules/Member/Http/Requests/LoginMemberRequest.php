@@ -24,6 +24,7 @@ final class LoginMemberRequest extends FormRequest
             'email' => ['required', 'string', 'email:rfc', 'max:255'],
             // We don't enforce password strength at login. Old passwords must still work.
             'password' => ['required', 'string'],
+            'remember' => ['sometimes', 'boolean'],   // optional, defaults to false
         ];
     }
 
