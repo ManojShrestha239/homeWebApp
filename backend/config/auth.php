@@ -42,6 +42,11 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+        // NEW: requests with "Authorization: Bearer <token>" are checked by JWT
+        'api' => [
+            'driver' => 'jwt',
+            'provider' => 'members',
+        ],
     ],
 
     /*
@@ -66,11 +71,11 @@ return [
             'driver' => 'eloquent',
             'model' => env('AUTH_MODEL', User::class),
         ],
-
-        // 'users' => [
-        //     'driver' => 'database',
-        //     'table' => 'users',
-        // ],
+        // NEW: our Member module is the source of truth for logins
+        'members' => [
+            'driver' => 'eloquent',
+            'model' => Modules\Member\Models\Member::class,
+        ],
     ],
 
     /*

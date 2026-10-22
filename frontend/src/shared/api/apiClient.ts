@@ -1,5 +1,6 @@
 import type { ApiResponse, ValidationErrors } from '@/shared/types/apiResponse'
 import { ApiError } from './ApiError'
+import { tokenStorage } from './tokenStorage'
 
 // Read the server address from .env. Falls back to localhost if it's missing
 const BASE_URL: string = import.meta.env.VITE_API_BASE_URL ?? 'http://homewebapp.manojshrestha239.com.np/api/v1'
@@ -21,11 +22,15 @@ export async function apiRequest<TData>(
   // ── 1. Send the request ───────────────────────────────
   let response: Response
   try {
+    // Attach the wristband to every request, if we have one
+    const token = tokenStorage.get()
+    
     response = await fetch(`${BASE_URL}${path}`, {
       method: options.method ?? 'GET',
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),   // only added when logged in
       },
       body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
       signal: options.signal,

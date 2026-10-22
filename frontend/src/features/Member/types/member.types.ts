@@ -25,3 +25,23 @@ export interface RegisterMemberPayload {
   password: string
   password_confirmation: string
 }
+
+// The form values for the login page
+export interface LoginFormValues {
+  email: string
+  password: string
+}
+
+// The exact shape the backend expects
+export interface LoginMemberPayload {
+  email: string
+  password: string
+}
+
+// What the server returns inside "data" after a successful login
+export interface LoginData {
+  access_token: string
+  token_type: 'bearer'
+  expires_in: number       // seconds until the token expires
+  member: Member
+}
