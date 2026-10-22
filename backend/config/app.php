@@ -123,4 +123,8 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /**
+     * The URL of the frontend application.
+     */
+    'frontend_url' => env('FRONTEND_URL', 'http://localhost:5173'),
 ];
