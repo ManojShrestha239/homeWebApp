@@ -1,0 +1,13 @@
+{
+  "files": [],                          // This root file compiles no code itself
+  "compilerOptions": {
+    "baseUrl": ".",                     // Resolve paths from this folder
+    "paths": {
+      "@/*": ["./src/*"]                // "@/components/ui/button" -> "src/components/ui/button"
+    }
+  },
+  "references": [                       // Child configs that do the real compiling
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" }
+  ]
+}

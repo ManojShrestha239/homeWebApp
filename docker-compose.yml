@@ -1,0 +1,133 @@
+# Project name shown in Docker Desktop
+name: fullstack-app
+
+# Reusable block: both "app" and "composer" build the same PHP image.
+# The YAML anchor (&php-build) saves us from repeating the settings.
+x-php-build: &php-build
+  context: .                          # Build from the project root
+  dockerfile: docker/php/Dockerfile   # Our PHP recipe
+
+services:
+
+  # ---------- FRONT DOOR: Nginx web server ----------
+  nginx:
+    image: nginx:1.27-alpine          # Small, fast web server
+    container_name: nginx
+    ports:
+      - "80:80"                     # Your browser visits http://localhost:80
+    volumes:
+      - ./backend:/var/www/backend:ro                                   # Laravel code (read-only here)
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro   # Routing rules
+    depends_on:
+      - app                           # Start PHP before Nginx
+      - frontend                      # Start React before Nginx
+    restart: unless-stopped           # Auto-restart after crashes or reboots
+
+  # ---------- KITCHEN: Laravel on PHP-FPM ----------
+  app:
+    build: *php-build                 # Use the PHP recipe above
+    image: laravel-php:local          # Name the built image so composer can reuse it
+    container_name: laravel_app
+    volumes:
+      - ./backend:/var/www/backend    # Live-sync your Laravel code into the container
+    depends_on:
+      pgsql:
+        condition: service_healthy    # Wait until Postgres says "I'm ready"
+      redis:
+        condition: service_healthy    # Wait until Redis says "PONG"
+    restart: unless-stopped
+
+  # ---------- MENU DISPLAY: React + Vite + shadcn ----------
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/node/Dockerfile
+    container_name: react_frontend
+    working_dir: /app/frontend
+    volumes:
+      - ./frontend:/app/frontend                       # Your React source code
+      - frontend_node_modules:/app/frontend/node_modules  # Keeps packages fast (not synced to host)
+    environment:
+      - CHOKIDAR_USEPOLLING=true      # Makes hot reload work on Windows/macOS file systems
+    expose:
+      - "5173"                        # Visible only to other containers (Nginx), not your browser
+    restart: unless-stopped
+
+  # ---------- PANTRY: PostgreSQL ----------
+  pgsql:
+    image: postgres:16-alpine
+    container_name: pgsql
+    environment:
+      POSTGRES_DB: ${DB_DATABASE}     # Creates this database on first start
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "127.0.0.1:5432:5432"         # Only reachable from your own machine
+    volumes:
+      - pgsql_data:/var/lib/postgresql/data   # Data survives container restarts
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d ${DB_DATABASE}"]
+      interval: 5s                    # Check every 5 seconds
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  # ---------- FAST COUNTER: Redis cache ----------
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    command: ["redis-server", "--appendonly", "yes"]   # Save data to disk too
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]               # Healthy when it replies PONG
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  # ---------- OPTIONAL POUCH: pgAdmin (profile: tools) ----------
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pgadmin
+    profiles: ["tools"]               # Only starts when you ask for the "tools" profile
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+    ports:
+      - "127.0.0.1:5050:80"           # Open http://localhost:5050
+    depends_on:
+      - pgsql
+    restart: unless-stopped
+
+  # ---------- OPTIONAL POUCH: Composer (profile: tools) ----------
+  composer:
+    build: *php-build                 # Same PHP image, so the same extensions
+    image: laravel-php:local
+    container_name: laravel_composer
+    profiles: ["tools"]               # Starts only when called on purpose
+    entrypoint: ["composer"]          # Every command runs as "composer ..."
+    working_dir: /var/www/backend
+    user: "${UID:-1000}:${GID:-1000}" # Files created belong to you, not root
+    environment:
+      COMPOSER_HOME: /tmp/composer    # Writable cache location
+    volumes:
+      - ./backend:/var/www/backend
+
+  # ---------- OPTIONAL POUCH: Cloudflare Tunnel (profile: tunnel) ----------
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared
+    profiles: ["tunnel"]              # Starts only with --profile tunnel
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}   # Read from your root .env
+    depends_on:
+      - nginx
+    restart: unless-stopped
+
+# Named volumes: Docker-managed storage that survives "docker compose down"
+volumes:
+  pgsql_data:
+  redis_data:
+  frontend_node_modules:
