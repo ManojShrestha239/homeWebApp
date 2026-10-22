@@ -22,10 +22,13 @@ final class Member extends Authenticatable implements JWTSubject   // NEW: add i
         'avatar_url',      // NEW
         'email_verification_token',
         'email_verification_expires_at',
+        'password_reset_token',             // NEW
+        'password_reset_expires_at',        // NEW
     ];
     protected $hidden = [
         'password',
         'email_verification_token',
+        'password_reset_token',
         'remember_token',
     ];
 
@@ -54,6 +57,7 @@ final class Member extends Authenticatable implements JWTSubject   // NEW: add i
         return [
             'email_verified_at' => 'datetime',
             'email_verification_expires_at' => 'datetime',
+            'password_reset_expires_at' => 'datetime',
             'password' => 'hashed',
         ];
     }

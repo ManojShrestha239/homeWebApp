@@ -5,6 +5,8 @@ import { LoginPage } from "@/features/Member/pages/LoginPage";
 import { OAuthCallbackPage } from "@/features/Member/pages/OAuthCallbackPage";
 import { RegisterPage } from "@/features/Member/pages/RegisterPage";
 import { VerifyEmailPage } from "@/features/Member/pages/VerifyEmailPage";
+import { ForgotPasswordPage } from "@/features/Member/pages/ForgotPasswordPage";
+import { ResetPasswordPage } from "@/features/Member/pages/ResetPasswordPage";
 
 type Access = "public" | "guest" | "protected";
 
@@ -12,9 +14,11 @@ type Access = "public" | "guest" | "protected";
 const ROUTES: Record<string, Access> = {
   "/verify-email": "public", // needs the ?token= from the email link, not a login
   "/oauth/callback": "public", // Google redirect lands here before any login exists
+  "/reset-password": "public", // needs ?token= from the email, not a login
   "/": "guest",
   "/register": "guest",
   "/login": "guest",
+  "/forgot-password": "guest", // guests only
   "/dashboard": "protected",
 };
 
@@ -47,11 +51,14 @@ export default function App() {
   if (access === "public") {
     if (path === "/verify-email") {
       const token = searchParams.get("token");
-
-      // No token in the link: this page isn't reachable, so send the browser away
       if (!token) return <Redirect to="/" />;
-
       return <VerifyEmailPage token={token} />;
+    }
+
+    if (path === "/reset-password") {
+      const token = searchParams.get("token");
+      if (!token) return <Redirect to="/forgot-password" />;
+      return <ResetPasswordPage token={token} />;
     }
     return <OAuthCallbackPage />;
   }
@@ -83,6 +90,7 @@ function AuthGate({ access, path }: AuthGateProps) {
 
   // Guest-only: logged-in members are sent to the dashboard
   if (auth.status === "authenticated") return <Redirect to="/dashboard" />;
+  if (path === "/forgot-password") return <ForgotPasswordPage />;
   if (path === "/register") return <RegisterPage />;
   return <LoginPage />; // "/", "/login", and any other guest route show the login page
 }
