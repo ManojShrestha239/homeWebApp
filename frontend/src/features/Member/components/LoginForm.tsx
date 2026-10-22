@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useLogin } from '../hooks/useLogin'
 import type { LoginFormValues } from '../types/member.types'
+import { useGoogleSignIn } from '../hooks/useGoogleSignIn'
 
 const INITIAL_VALUES: LoginFormValues = {
   email: '',
@@ -14,6 +15,7 @@ export function LoginForm() {
   const [values, setValues] = useState<LoginFormValues>(INITIAL_VALUES)
   const [clientError, setClientError] = useState<string | null>(null)
   const { status, member, errorMessage, submit, logout } = useLogin()
+  const google = useGoogleSignIn()
 
   const isLoading = status === 'loading'
 
@@ -52,42 +54,64 @@ export function LoginForm() {
   const shownError = clientError ?? errorMessage
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="space-y-4">
-      {shownError && (
-        <div role="alert" className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
-          {shownError}
+    <div className="space-y-4">
+      <form onSubmit={handleSubmit} noValidate className="space-y-4">
+        {shownError && (
+          <div role="alert" className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+            {shownError}
+          </div>
+        )}
+
+        <div className="space-y-1.5">
+          <Label htmlFor="email">Email</Label>
+          <Input
+            id="email"
+            name="email"
+            type="email"
+            autoComplete="email"
+            value={values.email}
+            onChange={handleChange}
+            disabled={isLoading}
+          />
         </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="password">Password</Label>
+          <Input
+            id="password"
+            name="password"
+            type="password"
+            autoComplete="current-password"
+            value={values.password}
+            onChange={handleChange}
+            disabled={isLoading}
+          />
+        </div>
+
+        <Button type="submit" className="w-full" disabled={isLoading}>
+          {isLoading ? 'Logging in…' : 'Log in'}
+        </Button>
+      </form>
+
+    <div className="flex items-center gap-3 text-xs text-muted-foreground">
+        <span className="h-px flex-1 bg-border" />
+        or
+        <span className="h-px flex-1 bg-border" />
+      </div>
+
+      {google.errorMessage && (
+        <p role="alert" className="text-sm text-destructive">{google.errorMessage}</p>
       )}
 
-      <div className="space-y-1.5">
-        <Label htmlFor="email">Email</Label>
-        <Input
-          id="email"
-          name="email"
-          type="email"
-          autoComplete="email"
-          value={values.email}
-          onChange={handleChange}
-          disabled={isLoading}
-        />
-      </div>
-
-      <div className="space-y-1.5">
-        <Label htmlFor="password">Password</Label>
-        <Input
-          id="password"
-          name="password"
-          type="password"
-          autoComplete="current-password"
-          value={values.password}
-          onChange={handleChange}
-          disabled={isLoading}
-        />
-      </div>
-
-      <Button type="submit" className="w-full" disabled={isLoading}>
-        {isLoading ? 'Logging in…' : 'Log in'}
+      <Button
+        type="button"
+        variant="outline"
+        className="w-full"
+        onClick={() => void google.start()}
+        disabled={isLoading || google.isStarting}
+      >
+        {google.isStarting ? 'Opening Google…' : 'Continue with Google'}
       </Button>
-    </form>
+    </div>
   )
 }

@@ -46,7 +46,7 @@ services:
     working_dir: /app/frontend
     volumes:
       - ./frontend:/app/frontend                       # Your React source code
-      - frontend_node_modules:/app/frontend/node_modules  # Keeps packages fast (not synced to host)
+      # - frontend_node_modules:/app/frontend/node_modules  # Keeps packages fast (not synced to host)
     environment:
       - CHOKIDAR_USEPOLLING=true      # Makes hot reload work on Windows/macOS file systems
     expose:
@@ -130,4 +130,4 @@ services:
 volumes:
   pgsql_data:
   redis_data:
-  frontend_node_modules:
+  # frontend_node_modules:

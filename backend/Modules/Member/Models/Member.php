@@ -18,10 +18,11 @@ final class Member extends Authenticatable implements JWTSubject   // NEW: add i
         'full_name',
         'email',
         'password',
+        'google_id',       // NEW
+        'avatar_url',      // NEW
         'email_verification_token',
         'email_verification_expires_at',
     ];
-
     protected $hidden = [
         'password',
         'email_verification_token',

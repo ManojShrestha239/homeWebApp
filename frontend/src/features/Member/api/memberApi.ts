@@ -2,6 +2,7 @@ import { apiRequest } from '@/shared/api/apiClient'
 import type { ApiResponse } from '@/shared/types/apiResponse'
 import type { Member, RegisterFormValues, RegisterMemberPayload } from '../types/member.types'
 import type { LoginFormValues, LoginMemberPayload, LoginData } from '../types/member.types'
+import type { GoogleAuthUrlData } from '../types/member.types'
 
 
 /** Translates the form's camelCase values into the backend's snake_case contract */
@@ -55,4 +56,9 @@ export function loginMember(
 /** Asks the server who the saved token belongs to */
 export function getCurrentMember(signal?: AbortSignal): Promise<ApiResponse<Member>> {
   return apiRequest<Member>('/members/me', { signal })
+}
+
+/** Asks the backend for the Google sign-in address */
+export function getGoogleAuthUrl(signal?: AbortSignal): Promise<ApiResponse<GoogleAuthUrlData>> {
+  return apiRequest<GoogleAuthUrlData>('/members/oauth/google/redirect', { signal })
 }

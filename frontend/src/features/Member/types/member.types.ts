@@ -45,3 +45,8 @@ export interface LoginData {
   expires_in: number       // seconds until the token expires
   member: Member
 }
+
+// The data inside the redirect endpoint's reply
+export interface GoogleAuthUrlData {
+  url: string   // Google's sign-in page address
+}

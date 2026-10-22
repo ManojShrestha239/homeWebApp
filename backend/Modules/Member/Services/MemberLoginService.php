@@ -27,7 +27,9 @@ final class MemberLoginService
 
         // Same message for "no such email" and "wrong password".
         // This stops attackers from discovering which emails are registered.
-        if ($member === null || ! Hash::check($dto->password, $member->password)) {
+        // Google-only members have no password, so they can't use the password form.
+        // They get the same generic message, which keeps account details private.
+        if ($member === null || $member->password === null || ! Hash::check($dto->password, $member->password)) {
             throw new ApiException(
                 HttpStatus::UNAUTHORIZED,
                 'INVALID_CREDENTIALS',
