@@ -38,8 +38,11 @@ export function useLogin(): UseLoginResult {
 
       // Save the wristband so later requests can use it
       tokenStorage.set(response.data?.access_token ?? '')
-      setMember(response.data?.member ?? null)
-      setStatus('success')
+      // setMember(response.data?.member ?? null)
+      // setStatus('success')
+
+      window.location.assign('/dashboard')   // same destination as Google login
+      return
     } catch (error: unknown) {
       if (controller.signal.aborted) return   // cancelled on purpose, so ignore it
 
