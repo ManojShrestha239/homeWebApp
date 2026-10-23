@@ -6,3 +6,6 @@ use Illuminate\Support\Facades\Route;
 
 // Every module's API routes go under the /api/v1 prefix
 Route::prefix('v1')->group(base_path('Modules/Member/Routes/api.php'));
+
+// Every module's API routes go under the /api/v1 prefix
+Route::prefix('v1')->group(base_path('Modules/Rbac/Routes/api.php'));

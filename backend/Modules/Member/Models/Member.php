@@ -7,10 +7,11 @@ namespace Modules\Member\Models;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;   // NEW: the package's "this can hold a wristband" contract
+use Spatie\Permission\Traits\HasRoles;   // NEW
 
 final class Member extends Authenticatable implements JWTSubject   // NEW: add implements
 {
-    use Notifiable;
+    use Notifiable, HasRoles;
 
     protected $table = 'members';
 
@@ -60,5 +61,14 @@ final class Member extends Authenticatable implements JWTSubject   // NEW: add i
             'password_reset_expires_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    /**
+     * NEW: tell Spatie which guard our members use. Our "api" guard is backed by the
+     * members provider, so roles and permissions are stored with guard_name = "api".
+     */
+    public function getDefaultGuardName(): string
+    {
+        return 'api';
     }
 }

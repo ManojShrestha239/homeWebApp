@@ -6,6 +6,8 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Modules\Member\Http\Middleware\AuthenticateMemberJwt;
+use Modules\Rbac\Http\Middleware\EnsureMemberCan;
 use Shared\Exceptions\ApiExceptionRenderer;
 use Shared\Http\Middleware\EnsureJsonRequest;
 
@@ -19,6 +21,12 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         // Every API request passes the JSON check first
         $middleware->api(prepend: [EnsureJsonRequest::class]);
+
+        // NEW: short names for our two middleware
+        $middleware->alias([
+            'member.jwt' => AuthenticateMemberJwt::class,
+            'member.can' => EnsureMemberCan::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // STEP 1: Tell Laravel that API and JSON-asking requests should get JSON errors
